@@ -44,6 +44,11 @@ def add_district(request):
                 'message':'invalid district_id'
             }
             return Response(context,status=status.HTTP_400_BAD_REQUEST)
+        except IntegrityError:
+            context={
+                'message':'invalid state_id'
+            }
+            return Response(context,status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 def list_district(request):
@@ -63,22 +68,23 @@ def list_district(request):
     return Response(context,status=status.HTTP_200_OK)
 @api_view(['PATCH'])
 def update_district(request):
+    state_id=request.POST.get('state_id',None)
     district_id=request.POST.get('district_id',None)
-    new_district_name=request.POST.get('new_district_name',None)
-    new_rainfall_type=request.POST.get('new_rainfall_type',None)
-    new_TYPE=request.POST.get('new_TYPE',None)
-    if district_id is None or new_district_name is None or new_rainfall_type is None or new_TYPE is None:
+    name=request.POST.get('name',None)
+    rainfall_type=request.POST.get('rainfall_type',None)
+    if state_id is None or district_id is None or name is None or rainfall_type is None:
         context={
-            'message':'district_id/new_district_name/new_rainfall_type is missing'
+            'message':'state_id/district_id/name/rainfall_type is missing'
         }
         return Response(context,status=status.HTTP_400_BAD_REQUEST)
     else:
         try:
-            get_district=District.objects.get(id=district_id)
-            get_district.name=new_district_name if new_district_name is None else get_district.name
-            get_district.rainfall_type=new_rainfall_type if new_rainfall_type is None else get_district.rainfall_type
-            get_district.TYPE=new_TYPE if new_TYPE is None else get_district.TYPE
-            get_district.save()
+            new_record=District.objects.get(id=district_id)
+            new_record.state_id=state_id if state_id is not None else new_record.state_id
+            new_record.district_id=district_id if district_id is not None else new_record.id
+            new_record.name=name if name is not None else new_record.name
+            new_record.rainfall_type=rainfall_type if rainfall_type is not None else new_record.rainfall_type
+            new_record.save()
             context={
                 'message':'district updated successfully'
             }
@@ -172,12 +178,10 @@ def update_state(request):
     else:
         try:
             get_state=State.objects.get(id=state_id)
-            get_state.name=new_state_name if new_state_name is None else get_state.name
+            get_state.name=new_state_name if new_state_name is not None else get_state.name
             get_state.save()
             context={
-                'message':'state updated successfully',
-                'state_id':get_state.id,
-                'state_name':get_state.state
+                'message':'state updated successfully'
             }
             return Response(context,status=status.HTTP_200_OK)
         except State.DoesNotExist:
@@ -216,3 +220,4 @@ def delete_state(request):
                 'message':'invalid state_id'
             }
             return Response(context,status=status.HTTP_400_BAD_BAD_REQUEST)
+
